@@ -4,6 +4,7 @@
 #include <string>
 #include <fstream>
 
+
 namespace iio {
 
     using image_array = std::vector<std::vector<std::vector<uint8_t>>>; //RGB image [channel, width, height]
@@ -17,7 +18,8 @@ namespace iio {
     static constexpr uint32_t BITMAP_WIDTH_ADRESS  = 18;
     static constexpr uint32_t BITMAP_HEIGHT_ADRESS = 22;
     static constexpr uint32_t BITMAP_RAW_SIZE_ADRESS = 34;
-
+    static constexpr uint32_t BITMAP_WIDTH_PPM_ADRESS = 38;
+    static constexpr uint32_t BITMAP_HEIGHT_PPM_ADRESS = 42;
 
     struct Coordinate {
         Coordinate() {};
@@ -38,7 +40,10 @@ namespace iio {
         image_array& get_bitmap();
         Coordinate& get_dimensions();
         
-        void write_bitmap_file(const std::string& out_filename);
+        void write_bitmap_file(
+            const std::string& out_filename,
+            const image_array& out_bitmap
+        );
 
     private:        
         uint32_t read_uint(std::ifstream& stream);
@@ -54,5 +59,6 @@ namespace iio {
         uint32_t bitmap_row_pad_size;
         uint32_t bitmap_filesize;
         uint32_t bitmap_raw_size;
+        Coordinate pixels_per_metre;
     };
 };
