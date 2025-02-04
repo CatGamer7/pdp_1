@@ -14,6 +14,7 @@ namespace iio {
         image_array& run_sequence();
 
     private:
+        void invert_segment(uint32_t start, uint32_t end);
         void run_segment(uint32_t start, uint32_t end);
 
         image_array& bitmap;

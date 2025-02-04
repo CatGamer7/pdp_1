@@ -24,7 +24,38 @@ iio::image_array& iio::Process_Bitmap::run_parallel()
     uint32_t segment_length = dimensions.y / n_threads;
     std::vector<std::thread> thread_vector;
 
-    // Launch
+    // Launch inversion
+    for (uint32_t y = 0; y < dimensions.y; y += segment_length) {
+        // last thread also handles any remainder
+        if ((y + segment_length) >= dimensions.y) {
+            thread_vector.push_back(
+                std::thread(
+                    [this, y] 
+                    {
+                        invert_segment(y, dimensions.y);
+                    }
+                )
+            );
+        }
+        else {
+            thread_vector.push_back(
+                std::thread(
+                    [this, y, segment_length] 
+                    {
+                        invert_segment(y, y + segment_length);
+                    }
+                )
+            );
+        }
+    }
+
+    // Join inversion
+    for (auto& t : thread_vector) {
+        t.join();
+    }
+    thread_vector.clear();
+
+    // Launch convolution
     for (uint32_t y = 0; y < dimensions.y; y += segment_length) {
         // last thread also handles any remainder
         if ((y + segment_length) >= dimensions.y) {
@@ -49,23 +80,24 @@ iio::image_array& iio::Process_Bitmap::run_parallel()
         }
     }
 
-    // Join
+    // Join convolution
     for (auto& t : thread_vector) {
         t.join();
     }
+    thread_vector.clear();
 
     return out_bitmap;
 }
 
 iio::image_array &iio::Process_Bitmap::run_sequence() {
+    invert_segment(0, dimensions.y);
     run_segment(0, dimensions.y);
 
     return out_bitmap;
 }
 
-void iio::Process_Bitmap::run_segment(uint32_t start, uint32_t end)
-{
-    // Invert color channel
+void iio::Process_Bitmap::invert_segment(uint32_t start, uint32_t end) {
+    // Invert
     for (uint32_t y = start; y < end; y++) {  
         for (uint32_t x = 0; x < dimensions.x; x++) {
             for (uint8_t c = 0; c < iio::CHANNELS; c++) {
@@ -73,7 +105,9 @@ void iio::Process_Bitmap::run_segment(uint32_t start, uint32_t end)
             };
         };
     };
+}
 
+void iio::Process_Bitmap::run_segment(uint32_t start, uint32_t end) {
     // Convolve
     for (uint32_t y = start; y < end; y++) {  
         for (uint32_t x = 0; x < dimensions.x; x++) {
@@ -85,7 +119,7 @@ void iio::Process_Bitmap::run_segment(uint32_t start, uint32_t end)
                 };
 
                 int32_t bottom = 0;
-                if (y < end - 1) {
+                if (y < dimensions.y - 1) {
                     bottom = bitmap[c][y + 1][x];
                 };
 
