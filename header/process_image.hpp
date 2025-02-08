@@ -1,4 +1,5 @@
 #pragma once
+#include <chrono>
 #include "io_image.hpp"
 
 
@@ -16,6 +17,7 @@ namespace iio {
     private:
         void invert_segment(uint32_t start, uint32_t end);
         void run_segment(uint32_t start, uint32_t end);
+        void time_it_from_timestamp(std::chrono::steady_clock::time_point start);
 
         image_array& bitmap;
         image_array out_bitmap;

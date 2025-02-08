@@ -1,4 +1,5 @@
 #include <thread>
+#include <iostream>
 #include "process_image.hpp"
 
 
@@ -12,11 +13,19 @@ iio::Process_Bitmap::Process_Bitmap(image_array &in_bitmap, Coordinate &in_dimen
 };
 
 iio::image_array& iio::Process_Bitmap::run() {
-    if (n_threads > 1) {
-        return run_parallel();
-    }
 
-    return run_sequence();
+    auto start = std::chrono::steady_clock::now();
+
+    if (n_threads > 1) {
+        iio::image_array& temp = run_parallel();
+        time_it_from_timestamp(start);
+        return temp;
+    }
+    else {
+        iio::image_array& temp = run_sequence();
+        time_it_from_timestamp(start);
+        return temp;
+    }
 }
 
 iio::image_array& iio::Process_Bitmap::run_parallel()
@@ -144,4 +153,10 @@ void iio::Process_Bitmap::run_segment(uint32_t start, uint32_t end) {
             };
         };
     };
+}
+
+void iio::Process_Bitmap::time_it_from_timestamp(std::chrono::steady_clock::time_point start) {
+    auto end = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    std::cout << "Time elapsed for processing: " << duration << "ms\n";
 };
